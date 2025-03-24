@@ -36,6 +36,9 @@ namespace RandM.TelnetDoor
         static TcpConnection _Server;
         static int _WaitOnExit = 5;
 
+        static bool _EnableIdleTimeout = true; // Enable by default
+        static int _IdleTimeout = 300; // 5 mins
+
         static void Main(string[] args)
         {
             try
@@ -129,6 +132,9 @@ namespace RandM.TelnetDoor
                 _Server = new TelnetConnection();
             }
 
+            
+
+
             // Sanity check on the port
             if ((_Port < 1) || (_Port > 65535))
             {
@@ -157,7 +163,9 @@ namespace RandM.TelnetDoor
                 if (CanContinue)
                 {
                     Door.WriteLn("connected!");
-
+                    Door.Session.DoIdleCheck = _EnableIdleTimeout;
+                    Door.Session.MaxIdle = _IdleTimeout;
+                    
                     if (Door.Local)
                     {
                         Ansi.ESC5nEvent += new EventHandler(Ansi_ESC5nEvent);
@@ -271,6 +279,22 @@ namespace RandM.TelnetDoor
                             _RLogin = true;
                             _RLoginTerminalType = Value;
                             break;
+
+                        case 'T':
+                            if (!int.TryParse(Value, out int tParam))
+                            {
+                                if(tParam > 0)
+                                {
+                                    _IdleTimeout = tParam;
+                                }
+                                else
+                                {
+                                    _EnableIdleTimeout = false;
+                                    _IdleTimeout = int.MaxValue;
+                                }
+                            }
+                            break;
+
                     }
                 }
             }
